@@ -1,10 +1,12 @@
-import configureStore from 'redux-mock-store';
+import configureMockStore from 'redux-mock-store'; // Change this import
 import thunk from 'redux-thunk';
 import MockAdapter from 'axios-mock-adapter';
 import axios from 'axios';
 import analyticsSlice, { fetchAnalyticsSummary, clearError } from '../analyticsSlice';
 
-const mockStore = configureStore([thunk]);
+const middlewares = [thunk];
+const mockStore = configureMockStore(middlewares); // This is the correct way
+
 const mock = new MockAdapter(axios);
 
 describe('analyticsSlice', () => {
@@ -21,7 +23,9 @@ describe('analyticsSlice', () => {
     mock.reset();
   });
 
-  // Thunks
+  afterEach(() => {
+    mock.restore();
+  });
   describe('fetchAnalyticsSummary', () => {
     it('fetches analytics summary successfully', async () => {
       const summaryData = { questsCompleted: 5, currentStreak: 3, longestStreak: 4, totalXp: 100 };
@@ -47,11 +51,10 @@ describe('analyticsSlice', () => {
     });
   });
 
-  // Reducers
   describe('reducers', () => {
     it('clears error', () => {
       const initialState = { summary: {}, loading: false, error: 'Error' };
-      const newState = analyticsSlice.reducer(initialState, clearError());
+      const newState = analyticsSlice(initialState, clearError());
       expect(newState.error).toBe(null);
     });
   });

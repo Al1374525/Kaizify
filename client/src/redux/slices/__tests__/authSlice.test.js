@@ -1,21 +1,37 @@
-import configureStore from 'redux-mock-store';
-import thunk from 'redux-thunk';
+import configureMockStore from 'redux-mock-store';
+import thunkMiddleware from 'redux-thunk';
 import MockAdapter from 'axios-mock-adapter';
 import axios from 'axios';
-import authSlice, { getProfile, updateProfile, setUser, clearError } from '../authSlice';
+import authSlice, { 
+  getProfile, 
+  updateProfile, 
+  clearError 
+} from '../authSlice';
 
-const mockStore = configureStore([thunk]);
-const mock = new MockAdapter(axios);
+const middlewares = [thunkMiddleware];
+const createMockStore = configureMockStore(middlewares);
 
 describe('authSlice', () => {
   let store;
+  let mockAxios;
 
   beforeEach(() => {
-    store = mockStore({ auth: { user: null, isAuthenticated: false, loading: false, error: null } });
-    mock.reset();
+    store = createMockStore({
+      auth: {
+        user: null,
+        isAuthenticated: false,
+        loading: false,
+        error: null
+      }
+    });
+    mockAxios = new MockAdapter(axios);
   });
 
-  // Thunks
+  afterEach(() => {
+    mockAxios.restore();
+    store.clearActions();
+  });
+
   describe('getProfile', () => {
     it('fetches profile successfully', async () => {
       const profileData = { _id: '1', displayName: 'Test User', avatar: {} };
@@ -66,18 +82,17 @@ describe('authSlice', () => {
     });
   });
 
-  // Reducers
   describe('reducers', () => {
     it('sets user and authentication status', () => {
       const initialState = { user: null, isAuthenticated: false, loading: false, error: null };
-      const newState = authSlice.reducer(initialState, setUser({ displayName: 'Test User' }));
+      const newState = authSlice(initialState, setUser({ displayName: 'Test User' }));
       expect(newState.user).toEqual({ displayName: 'Test User' });
       expect(newState.isAuthenticated).toBe(true);
     });
 
     it('clears error', () => {
       const initialState = { user: null, isAuthenticated: false, loading: false, error: 'Error' };
-      const newState = authSlice.reducer(initialState, clearError());
+      const newState = authSlice(initialState, clearError());
       expect(newState.error).toBe(null);
     });
   });

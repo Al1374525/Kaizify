@@ -1,21 +1,32 @@
-import configureStore from 'redux-mock-store';
-import thunk from 'redux-thunk';
+import configureMockStore from 'redux-mock-store';
+import thunkMiddleware from 'redux-thunk';
 import MockAdapter from 'axios-mock-adapter';
 import axios from 'axios';
 import rewardSlice, { fetchRewards, purchaseReward, clearError } from '../rewardSlice';
 
-const mockStore = configureStore([thunk]);
-const mock = new MockAdapter(axios);
+const middlewares = [thunkMiddleware];
+const createMockStore = configureMockStore(middlewares);
 
 describe('rewardSlice', () => {
   let store;
+  let mockAxios;
 
   beforeEach(() => {
-    store = mockStore({ rewards: { rewards: [], loading: false, error: null } });
-    mock.reset();
+    store = createMockStore({
+      rewards: { 
+        rewards: [], 
+        loading: false, 
+        error: null 
+      }
+    });
+    mockAxios = new MockAdapter(axios);
   });
 
-  // Thunks
+  afterEach(() => {
+    mockAxios.restore();
+    store.clearActions();
+  });
+
   describe('fetchRewards', () => {
     it('fetches rewards successfully', async () => {
       const rewardsData = [{ _id: '1', name: 'Sword', cost: { coins: 50 } }];
@@ -66,11 +77,10 @@ describe('rewardSlice', () => {
     });
   });
 
-  // Reducers
   describe('reducers', () => {
     it('clears error', () => {
       const initialState = { rewards: [], loading: false, error: 'Error' };
-      const newState = rewardSlice.reducer(initialState, clearError());
+      const newState = rewardSlice(initialState, clearError());
       expect(newState.error).toBe(null);
     });
   });

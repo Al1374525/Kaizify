@@ -1,39 +1,22 @@
-// client/src/redux/slices/analyticsSlice.js
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
-import { toast } from 'react-toastify';
+const { createSlice, createAsyncThunk } = require('@reduxjs/toolkit');
+const axios = require('axios');
 
-// Thunks
-export const fetchAnalyticsSummary = createAsyncThunk(
-  'analytics/fetchAnalyticsSummary',
-  async (_, { rejectWithValue }) => {
-    try {
-      const response = await axios.get('/api/analytics/summary');
-      return response.data;
-    } catch (err) {
-      return rejectWithValue(err.response?.data?.message || 'Failed to fetch analytics');
-    }
+const fetchAnalyticsSummary = createAsyncThunk('analytics/fetchAnalyticsSummary', async (_, { rejectWithValue }) => {
+  try {
+    const response = await axios.get('/api/analytics/summary');
+    return response.data;
+  } catch (err) {
+    return rejectWithValue(err.response.data.message);
   }
-);
+});
 
-// Initial State
-const initialState = {
-  summary: {
-    questsCompleted: 0,
-    questsByCategory: {},
-    currentStreak: 0,
-    longestStreak: 0,
-    totalXp: 0,
-    skillPoints: {},
-  },
-  loading: false,
-  error: null,
-};
-
-// Slice
 const analyticsSlice = createSlice({
   name: 'analytics',
-  initialState,
+  initialState: {
+    summary: { questsCompleted: 0, questsByCategory: {}, currentStreak: 0, longestStreak: 0, totalXp: 0, skillPoints: {} },
+    loading: false,
+    error: null,
+  },
   reducers: {
     clearError: (state) => {
       state.error = null;
@@ -41,10 +24,7 @@ const analyticsSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchAnalyticsSummary.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
+      .addCase(fetchAnalyticsSummary.pending, (state) => { state.loading = true; })
       .addCase(fetchAnalyticsSummary.fulfilled, (state, action) => {
         state.loading = false;
         state.summary = action.payload;
@@ -52,10 +32,10 @@ const analyticsSlice = createSlice({
       .addCase(fetchAnalyticsSummary.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-        toast.error(action.payload);
       });
   },
 });
 
-export const { clearError } = analyticsSlice.actions;
-export default analyticsSlice.reducer;
+module.exports = analyticsSlice;
+module.exports.fetchAnalyticsSummary = fetchAnalyticsSummary;
+module.exports.clearError = analyticsSlice.actions.clearError;
